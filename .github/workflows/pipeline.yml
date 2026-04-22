@@ -2,13 +2,13 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, fixes, containerization, ci-cd]
+    branches: [ main, fixes, containerization, ci-cd ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 env:
   REGISTRY: localhost:5000
-  REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD || 'testpassword123' }}
+  REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
 
 jobs:
   # ── Stage 1: Lint ──────────────────────────────────────────────────
@@ -203,7 +203,7 @@ jobs:
           chmod +x scripts/integration-test.sh
           bash scripts/integration-test.sh
         env:
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD || 'testpassword123' }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           FRONTEND_PORT: "5000"
 
       - name: Collect logs on failure
@@ -226,7 +226,7 @@ jobs:
       - name: Set up environment
         run: |
           cat > .env <<EOF
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD || 'testpassword123' }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           FRONTEND_PORT=5000
           EOF
 

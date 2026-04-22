@@ -14,7 +14,7 @@ echo "=== Integration Test ==="
 
 # Step 1: Create .env file for docker-compose
 cat > .env <<EOF
-REDIS_PASSWORD=${REDIS_PASSWORD:-testpassword123}
+REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
 FRONTEND_PORT=${FRONTEND_PORT}
 EOF
 
