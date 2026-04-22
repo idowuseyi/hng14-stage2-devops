@@ -1,34 +1,11 @@
 import pytest
-import os
-from unittest.mock import patch, AsyncMock
 from httpx import ASGITransport, AsyncClient
-import fakeredis.aioredis
 
 from main import app
 
 
-@pytest.fixture
-async def setup_app(fake_redis):
-    """Set up the FastAPI app with a fake Redis instance.
-
-    We patch the Redis class so the lifespan context manager
-    creates a fake Redis instead of trying to connect to a real one.
-    """
-    app.state.redis = fake_redis
-    yield
-    # Reset state after test
-    if hasattr(app.state, "redis"):
-        app.state.redis = None
-
-
-# We need to prevent the lifespan from creating a real Redis connection.
-# The simplest approach: set REDIS_HOST to a dummy value and mock Redis
-# at import time, OR just set app.state.redis before the client is created
-# and make the lifespan skip if redis is already set.
-
-
 @pytest.mark.asyncio
-async def test_health_endpoint(setup_app):
+async def test_health_endpoint():
     """Test that the health endpoint returns 200 and healthy status."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -38,8 +15,9 @@ async def test_health_endpoint(setup_app):
 
 
 @pytest.mark.asyncio
-async def test_create_job(setup_app, fake_redis):
+async def test_create_job(fake_redis):
     """Test that creating a job returns a job_id and queues it in Redis."""
+    app.state.redis = fake_redis
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post("/jobs")
@@ -58,10 +36,11 @@ async def test_create_job(setup_app, fake_redis):
 
 
 @pytest.mark.asyncio
-async def test_get_job_status(setup_app, fake_redis):
+async def test_get_job_status(fake_redis):
     """Test that getting a job status returns the correct status."""
     # Pre-populate Redis with a completed job
     await fake_redis.hset("job:test-123-456", "status", "completed")
+    app.state.redis = fake_redis
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -73,8 +52,9 @@ async def test_get_job_status(setup_app, fake_redis):
 
 
 @pytest.mark.asyncio
-async def test_get_job_not_found(setup_app):
+async def test_get_job_not_found(fake_redis):
     """Test that getting a non-existent job returns 404."""
+    app.state.redis = fake_redis
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get("/jobs/nonexistent-job-id")

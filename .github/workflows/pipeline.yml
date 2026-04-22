@@ -37,7 +37,7 @@ jobs:
       - name: Install Node dependencies
         run: |
           cd frontend
-          npm install
+          npm install --include=dev
 
       - name: Lint JavaScript (eslint)
         run: |
